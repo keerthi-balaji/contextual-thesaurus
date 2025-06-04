@@ -14,4 +14,4 @@ build/
 
 # Virtual environment
 venv/
-env/
+env/glove.6B.zip
