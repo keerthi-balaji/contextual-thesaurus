@@ -1,0 +1,17 @@
+# GloVe vectors
+*.txt
+!requirements.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environment
+venv/
+env/
