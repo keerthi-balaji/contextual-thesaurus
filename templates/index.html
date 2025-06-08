@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contextual Thesaurus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Contextual Thesaurus</h1>
+        
+        <div class="input-section">
+            <textarea id="sentence" placeholder="Enter your sentence..."></textarea>
+            <div>
+                <input type="text" id="word" placeholder="Word to replace">
+                <button onclick="getSuggestions()" id="submitBtn">Get Suggestions</button>
+            </div>
+        </div>
+
+        <div id="error" class="error-message" style="display: none;"></div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Finding suggestions...</p>
+        </div>
+
+        <div id="suggestions" class="suggestions-container"></div>
+    </div>
+
+    <script>
+        async function getSuggestions() {
+            const sentence = document.getElementById('sentence').value.trim();
+            const word = document.getElementById('word').value.trim();
+            const errorDiv = document.getElementById('error');
+            const loadingDiv = document.getElementById('loading');
+            const suggestionsDiv = document.getElementById('suggestions');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Clear previous results
+            errorDiv.style.display = 'none';
+            suggestionsDiv.innerHTML = '';
+
+            if (!sentence || !word) {
+                errorDiv.textContent = 'Please enter both a sentence and a word';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                loadingDiv.style.display = 'block';
+
+                const response = await fetch('/suggest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sentence: sentence,
+                        word: word,
+                        top_n: 5
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to get suggestions');
+                }
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (!data.suggestions || !data.suggestions.length) {
+                    errorDiv.textContent = 'No suggestions found';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                // Display suggestions
+                data.suggestions.forEach(([word, score, definition]) => {
+                    const card = document.createElement('div');
+                    card.className = 'suggestion-card';
+                    card.innerHTML = `
+                        <h3>${word}</h3>
+                        <p><strong>Confidence:</strong> ${(score * 100).toFixed(1)}%</p>
+                        <p><strong>Definition:</strong> ${definition || 'No definition available'}</p>
+                    `;
+                    suggestionsDiv.appendChild(card);
+                });
+
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
